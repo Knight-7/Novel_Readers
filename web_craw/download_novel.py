@@ -21,40 +21,36 @@ class DownloadNovel():
         }
         self._response = requests.get(self._url, headers=self._headers)
         self._response.encoding = 'utf8'
+        if self._response.status_code == 200:
+            self._soup = BeautifulSoup(self._response.text, 'lxml')
         if self._novel_path is not None:
             self._novel_path = os.path.join(self._novel_path + self._title)
 
     def get_novel_title(self):
-        if self._response.status_code == 200:
-            pattern = re.compile("<dd>.*?'(.*?)' >(.*?)</a>.*?</dd>", re.S)
-            results = re.findall(pattern, self._response.text)
-            for result in results:
-                yield {
-                    'title': result[1],
-                    'link': urljoin(self._url, result[0])
-                }
+        pattern = re.compile("<dd>.*?'(.*?)' >(.*?)</a>.*?</dd>", re.S)
+        results = re.findall(pattern, self._response.text)
+        for result in results:
+            yield {
+                'title': result[1],
+                'link': urljoin(self._url, result[0])
+            }
 
     def get_novel_image(self):
-        if self._response.status_code == 200:
-            soup = BeautifulSoup(self._response.text, 'lxml')
-            img_src = soup.find_all('img')[1]['src']
-            img_content = requests.get(img_src, headers=self._headers)
-            if img_content.status_code == 200:
-                self.write_to_local(self._title, img_content.content, 2)
-                return self._title + '.jpg'
+        self._soup = BeautifulSoup(self._response.text, 'lxml')
+        img_src = self._soup.find_all('img')[1]['src']
+        img_content = requests.get(img_src, headers=self._headers)
+        if img_content.status_code == 200:
+            self.write_to_local(self._title, img_content.content, 2)
+            return self._title + '.jpg'
 
     def get_novel_introduction(self):
-        response = requests.get(self._url, headers=self._headers)
-        response.encoding = 'utf8'
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'lxml')
-            box_con = soup.find(class_='box_con')
-            ps = box_con.find_all('p')
-            inf = []
-            for i in range(len(ps)):
-                if i == 0 or i == 5:
-                    inf.append(ps[i].string)
-            return inf
+        box_con = self._soup.find(class_='box_con')
+        ps = box_con.find_all('p')
+        inf = []
+        for i in range(len(ps)):
+            if i == 0 or i == 5:
+                inf.append(ps[i].string)
+        return inf
 
     def get_novel_text(self, url):
         response = requests.get(url, headers=self._headers)
