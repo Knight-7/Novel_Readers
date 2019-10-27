@@ -3,12 +3,12 @@ from PyQt5 import QtGui
 from qt_ui.ranklist import Ui_Widget
 from PyQt5.QtCore import pyqtSignal
 from web_craw.download_novel import DownloadNovel
-from urllib.parse import urljoin
 
 
 class MyRankList(QWidget, Ui_Widget):
     """排行榜的类"""
 
+    read_signal = pyqtSignal(list)
     back_signal = pyqtSignal()
 
     def __init__(self):
@@ -21,7 +21,7 @@ class MyRankList(QWidget, Ui_Widget):
         self.grid_buttons = []                                          # 表格里的章节按钮
         self.current_time = 0                                           # 当前是什么排名的榜单（总排名。。。）
         self.novel_chapter = None                                       # 小说的章节名称
-        self.base_url = 'http://www.xbiquge.la/'                        # 笔趣阁网址
+        self.chapters = None
         self.current_time_name = ['总排名', '周排名', '月排名', '日排名']
         self.rank_lists = ['玄幻.奇幻小说排行榜', '修真.仙侠小说排行榜',
                            '都市.青春小说排行榜', '历史.穿越小说排行榜',
@@ -49,16 +49,16 @@ class MyRankList(QWidget, Ui_Widget):
                 self.gridLayout.addWidget(button, i + 1, j + 1)
             self.grid_buttons.append(tmp_list)
 
-    def add_grid_connection(self):
-        chapters = self.novel_chapter[self.current_chapter_index * 32:
+    def set_grid_button_name(self):
+        self.chapters = self.novel_chapter[self.current_chapter_index * 32:
                                       self.current_chapter_index * 32 + 32]
         index = 0
         for i in range(8):
             for j in range(4):
-                if ' ' in chapters[index][1]:
-                    self.grid_buttons[i][j].setText(chapters[index][1][: chapters[index][1].index(' ')])
-                elif '：' in chapters[index][1]:
-                    self.grid_buttons[i][j].setText(chapters[index][1][: chapters[index][1].index('：')])
+                if ' ' in self.chapters[index][1]:
+                    self.grid_buttons[i][j].setText(self.chapters[index][1][: self.chapters[index][1].index(' ')])
+                elif '：' in self.chapters[index][1]:
+                    self.grid_buttons[i][j].setText(self.chapters[index][1][: self.chapters[index][1].index('：')])
                 index += 1
 
     def add_vertical_connection(self):
@@ -84,6 +84,40 @@ class MyRankList(QWidget, Ui_Widget):
         self.title_buttons[18].clicked.connect(lambda: self.choose_novel(18))
         self.title_buttons[19].clicked.connect(lambda: self.choose_novel(19))
 
+    def add_grid_connection(self):
+        self.grid_buttons[0][0].clicked.connect(lambda: self.read_novel(0))
+        self.grid_buttons[0][1].clicked.connect(lambda: self.read_novel(1))
+        self.grid_buttons[0][2].clicked.connect(lambda: self.read_novel(2))
+        self.grid_buttons[0][3].clicked.connect(lambda: self.read_novel(3))
+        self.grid_buttons[1][0].clicked.connect(lambda: self.read_novel(4))
+        self.grid_buttons[1][1].clicked.connect(lambda: self.read_novel(5))
+        self.grid_buttons[1][2].clicked.connect(lambda: self.read_novel(6))
+        self.grid_buttons[1][3].clicked.connect(lambda: self.read_novel(7))
+        self.grid_buttons[2][0].clicked.connect(lambda: self.read_novel(8))
+        self.grid_buttons[2][1].clicked.connect(lambda: self.read_novel(9))
+        self.grid_buttons[2][2].clicked.connect(lambda: self.read_novel(10))
+        self.grid_buttons[2][3].clicked.connect(lambda: self.read_novel(11))
+        self.grid_buttons[3][0].clicked.connect(lambda: self.read_novel(12))
+        self.grid_buttons[3][1].clicked.connect(lambda: self.read_novel(13))
+        self.grid_buttons[3][2].clicked.connect(lambda: self.read_novel(14))
+        self.grid_buttons[3][3].clicked.connect(lambda: self.read_novel(15))
+        self.grid_buttons[4][0].clicked.connect(lambda: self.read_novel(16))
+        self.grid_buttons[4][1].clicked.connect(lambda: self.read_novel(17))
+        self.grid_buttons[4][2].clicked.connect(lambda: self.read_novel(18))
+        self.grid_buttons[4][3].clicked.connect(lambda: self.read_novel(19))
+        self.grid_buttons[5][0].clicked.connect(lambda: self.read_novel(20))
+        self.grid_buttons[5][1].clicked.connect(lambda: self.read_novel(21))
+        self.grid_buttons[5][2].clicked.connect(lambda: self.read_novel(22))
+        self.grid_buttons[5][3].clicked.connect(lambda: self.read_novel(23))
+        self.grid_buttons[6][0].clicked.connect(lambda: self.read_novel(24))
+        self.grid_buttons[6][1].clicked.connect(lambda: self.read_novel(25))
+        self.grid_buttons[6][2].clicked.connect(lambda: self.read_novel(26))
+        self.grid_buttons[6][3].clicked.connect(lambda: self.read_novel(27))
+        self.grid_buttons[7][0].clicked.connect(lambda: self.read_novel(28))
+        self.grid_buttons[7][1].clicked.connect(lambda: self.read_novel(29))
+        self.grid_buttons[7][2].clicked.connect(lambda: self.read_novel(30))
+        self.grid_buttons[7][3].clicked.connect(lambda: self.read_novel(31))
+
     def choose_novel(self, select_index):
         self.jianjie.clear()
         title = self.list_inf[self.current_index][self.current_time_name[self.current_time]][select_index]['title']
@@ -96,7 +130,7 @@ class MyRankList(QWidget, Ui_Widget):
         self.set_picture(novel_getter.get_novel_image())
         self.novel_chapter = novel_getter.get_novel_chapter()
         self.label_total_page.setText('/' + str(len(self.novel_chapter)))
-        self.add_grid_connection()
+        self.set_grid_button_name()
 
     def set_picture(self, pic_name):
         pixmap = QtGui.QPixmap(pic_name)
@@ -110,6 +144,7 @@ class MyRankList(QWidget, Ui_Widget):
         self.label_list_name.setText(self.rank_lists[self.current_index])
         self.setWindowTitle(self.rank_lists[self.current_index])
         self.add_vertical_connection()
+        self.add_grid_connection()
         if not self.isVisible():
             self.show()
 
@@ -149,3 +184,6 @@ class MyRankList(QWidget, Ui_Widget):
         if self.isVisible():
             self.back_signal.emit()
             self.hide()
+
+    def read_novel(self, index):
+        self.read_signal.emit(list(self.chapters[index]))

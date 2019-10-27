@@ -7,6 +7,13 @@ from time import sleep
 from urllib.parse import urljoin
 
 
+headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) '
+                          'AppleWebKit/537.36 (KHTML, like Gecko) '
+                          'Chrome/52.0.2743.116 Safari/537.36'
+        }
+
+
 class DownloadNovel():
     """自定义的一个从笔趣阁爬取小说的类"""
 
@@ -48,19 +55,6 @@ class DownloadNovel():
                 inf.append(ps[i].string)
         return inf
 
-    def get_novel_text(self, url):
-        response = requests.get(url, headers=self._headers)
-        response.encoding = 'utf8'
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'lxml')
-            html_text = soup.prettify()
-            pattern = re.compile('<br/>(.*?)<br/>|"content">(.*?)<br/>', re.S)
-            results = pattern.findall(html_text)
-            novel = results[0][1].strip() + '\n'
-            for result in results[1:-2]:
-                novel += result[0].strip() + '\n'
-            return novel
-
     def write_to_local(self, chapter_title, content, save_type=1):
         if self._novel_path is not None:
             try:
@@ -100,11 +94,29 @@ class DownloadNovel():
     def download(self):
         if self.make_dir():
             self.get_novel_image()
-            for item in self.get_novel_title():
+            for item in self.get_novel_chapter():
                 print(f'正在下载----{item["title"]}')
-                novel = self.get_novel_text(item['link'])
+                novel = get_novel_text(item['link'], 1)
                 self.write_to_local(item['title'], novel)
                 sleep(0.2)
+
+
+def get_novel_text(url, type=1):
+    response = requests.get(url, headers=headers)
+    response.encoding = 'utf8'
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'lxml')
+        html_text = soup.prettify()
+        pattern = re.compile('<br/>(.*?)<br/>|"content">(.*?)<br/>', re.S)
+        results = pattern.findall(html_text)
+        novel = results[0][1].strip() + '\n'
+        if type == 1:
+            for result in results[1:-2]:
+                novel += result[0].strip() + '\n'
+            return novel
+        else:
+            for result in results[1:-2]:
+                yield '    ' + result[0].strip() + '\n'
 
 
 if __name__ == '__main__':
