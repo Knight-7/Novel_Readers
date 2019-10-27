@@ -3,6 +3,7 @@ from PyQt5 import QtGui
 from qt_ui.ranklist import Ui_Widget
 from PyQt5.QtCore import pyqtSignal
 from web_craw.download_novel import DownloadNovel
+from urllib.parse import urljoin
 
 
 class MyRankList(QWidget, Ui_Widget):
@@ -13,30 +14,54 @@ class MyRankList(QWidget, Ui_Widget):
     def __init__(self):
         super(MyRankList, self).__init__()
         self.setupUi(self)
-        self.list_inf = None
-        self.current_index = None
-        self.title_buttons = {}
-        self.grid_buttons = []
-        self.current_time = 0
+        self.list_inf = None                                            # 整个榜单的书名与链接
+        self.current_chapter_index = 0                                  # 当前的页数
+        self.current_index = None                                       # 当前选择的榜单的序号
+        self.title_buttons = {}                                         # 左侧放小说名字的按钮
+        self.grid_buttons = []                                          # 表格里的章节按钮
+        self.current_time = 0                                           # 当前是什么排名的榜单（总排名。。。）
+        self.novel_chapter = None                                       # 小说的章节名称
+        self.base_url = 'http://www.xbiquge.la/'                        # 笔趣阁网址
         self.current_time_name = ['总排名', '周排名', '月排名', '日排名']
         self.rank_lists = ['玄幻.奇幻小说排行榜', '修真.仙侠小说排行榜',
                            '都市.青春小说排行榜', '历史.穿越小说排行榜',
                            '全部小说排行榜', '全本小说排行榜',
                            '科技.灵异小说排行榜', '网游.竞技小说排行榜']
+        self.add_buttons()
+        self.add_grid_buttons()
 
     def add_buttons(self):
         for i in range(20):
             button = QPushButton()
-            button.setText(self.list_inf[self.current_index]['总排名'][i]['title'])
+            button.setText(' ')
             button.setFlat(True)
             button.setStyleSheet('text-align:left;')
             self.title_buttons[i] = button
             self.verticalLayout.addWidget(button)
 
     def add_grid_buttons(self):
-        pass
+        for i in range(8):
+            tmp_list = []
+            for j in range(4):
+                button = QPushButton()
+                button.setText(' ')
+                tmp_list.append(button)
+                self.gridLayout.addWidget(button, i + 1, j + 1)
+            self.grid_buttons.append(tmp_list)
 
-    def add_connetc(self):
+    def add_grid_connection(self):
+        chapters = self.novel_chapter[self.current_chapter_index * 32:
+                                      self.current_chapter_index * 32 + 32]
+        index = 0
+        for i in range(8):
+            for j in range(4):
+                if ' ' in chapters[index][1]:
+                    self.grid_buttons[i][j].setText(chapters[index][1][: chapters[index][1].index(' ')])
+                elif '：' in chapters[index][1]:
+                    self.grid_buttons[i][j].setText(chapters[index][1][: chapters[index][1].index('：')])
+                index += 1
+
+    def add_vertical_connection(self):
         self.pushButton_quit.clicked.connect(self.back_to_main)
         self.title_buttons[0].clicked.connect(lambda: self.choose_novel(0))
         self.title_buttons[1].clicked.connect(lambda: self.choose_novel(1))
@@ -69,6 +94,9 @@ class MyRankList(QWidget, Ui_Widget):
         self.label_author.setText(introduction[0])
         self.jianjie.append(introduction[1])
         self.set_picture(novel_getter.get_novel_image())
+        self.novel_chapter = novel_getter.get_novel_chapter()
+        self.label_total_page.setText('/' + str(len(self.novel_chapter)))
+        self.add_grid_connection()
 
     def set_picture(self, pic_name):
         pixmap = QtGui.QPixmap(pic_name)
@@ -76,20 +104,46 @@ class MyRankList(QWidget, Ui_Widget):
         self.label_picture.setScaledContents(True)
 
     def show_win(self, list_inf):
-        self.init()
+        self.list_inf = list_inf
         self.current_index = list(list_inf.keys())[0]
+        self.init()
         self.label_list_name.setText(self.rank_lists[self.current_index])
         self.setWindowTitle(self.rank_lists[self.current_index])
-        self.list_inf = list_inf
-        self.add_buttons()
-        self.add_connetc()
+        self.add_vertical_connection()
         if not self.isVisible():
             self.show()
+
+    def change_title_list(self, index):
+        self.pushButton_total.setDisabled(False)
+        self.pushButton_week.setDisabled(False)
+        self.pushButton_month.setDisabled(False)
+        self.pushButton_day.setDisabled(False)
+        self.current_time = index
+        if index == 0:
+            self.pushButton_total.setDisabled(True)
+        elif index == 1:
+            self.pushButton_week.setDisabled(True)
+        elif index == 2:
+            self.pushButton_month.setDisabled(True)
+        else:
+            self.pushButton_day.setDisabled(True)
+        for i in range(20):
+            self.title_buttons[i].setText(self.list_inf[self.current_index]
+                                          [self.current_time_name[self.current_time]][i]['title'])
 
     def init(self):
         self.label_picture.setText('')
         self.label_author.setText('')
         self.label_title.setText('')
+        self.label_total_page.setText('')
+        self.pushButton_total.setDisabled(True)
+        self.pushButton_total.clicked.connect(lambda: self.change_title_list(0))
+        self.pushButton_week.clicked.connect(lambda: self.change_title_list(1))
+        self.pushButton_month.clicked.connect(lambda: self.change_title_list(2))
+        self.pushButton_day.clicked.connect(lambda: self.change_title_list(3))
+        for i in range(20):
+            self.title_buttons[i].setText(self.list_inf[self.current_index]
+                                          [self.current_time_name[self.current_time]][i]['title'])
 
     def back_to_main(self):
         if self.isVisible():

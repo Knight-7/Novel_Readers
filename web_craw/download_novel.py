@@ -26,14 +26,10 @@ class DownloadNovel():
         if self._novel_path is not None:
             self._novel_path = os.path.join(self._novel_path + self._title)
 
-    def get_novel_title(self):
+    def get_novel_chapter(self):
         pattern = re.compile("<dd>.*?'(.*?)' >(.*?)</a>.*?</dd>", re.S)
         results = re.findall(pattern, self._response.text)
-        for result in results:
-            yield {
-                'title': result[1],
-                'link': urljoin(self._url, result[0])
-            }
+        return results
 
     def get_novel_image(self):
         self._soup = BeautifulSoup(self._response.text, 'lxml')
@@ -112,5 +108,8 @@ class DownloadNovel():
 
 
 if __name__ == '__main__':
-    douluodalu = DownloadNovel("圣墟", "http://www.xbiquge.la/17/17941/")
-    douluodalu.get_novel_image()
+    """douluodalu = DownloadNovel("圣墟", "http://www.xbiquge.la/13/13959/")
+    print(douluodalu.get_novel_chapter()[0: 30])
+    print(type(douluodalu.get_novel_chapter()))"""
+    test_str = '第一章 一二三'
+    print(test_str[: test_str.index(' ')])
