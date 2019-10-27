@@ -7,7 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 
 class Ui_Widget(object):
@@ -18,6 +18,7 @@ class Ui_Widget(object):
         self.label_list_name.setGeometry(QtCore.QRect(10, 20, 461, 31))
         self.label_list_name.setStyleSheet("font: 20pt \"楷体\";\n"
 "text-align:\"middle\";")
+        self.label_list_name.setAlignment(QtCore.Qt.AlignCenter)
         self.label_list_name.setObjectName("label_list_name")
         self.verticalLayoutWidget = QtWidgets.QWidget(Widget)
         self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 100, 141, 531))
