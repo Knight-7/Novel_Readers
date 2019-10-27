@@ -29,6 +29,7 @@ class MyRankList(QWidget, Ui_Widget):
                            '科技.灵异小说排行榜', '网游.竞技小说排行榜']
         self.add_buttons()
         self.add_grid_buttons()
+        self.setFixedSize(self.size())
 
     def add_buttons(self):
         for i in range(20):

@@ -17,6 +17,8 @@ class Ui_read(object):
         self.label_chapter = QtWidgets.QLabel(read)
         self.label_chapter.setGeometry(QtCore.QRect(460, 20, 271, 41))
         self.label_chapter.setObjectName("label_chapter")
+        self.label_chapter.setStyleSheet("font: 20pt \"楷体\";\n"
+"text-align:\"middle\";")
         self.textBrowser_novel_text = QtWidgets.QTextBrowser(read)
         self.textBrowser_novel_text.setGeometry(QtCore.QRect(0, 90, 1161, 481))
         self.textBrowser_novel_text.setStyleSheet("QTextBrowser { background-color: rgb(255, 132, 139, 0);\n"

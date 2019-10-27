@@ -16,6 +16,28 @@ class MyRead(QWidget, Ui_read):
         self.novel_inf = None
         self.novel_text = None
         self.base_url = 'http://www.xbiquge.la/'                        # 笔趣阁网址
+        self.set_form_layout()
+
+    def set_form_layout(self):
+        global_layout = QVBoxLayout()
+        wg1 = QWidget()
+        wg2 = QWidget()
+        h_layout1 = QHBoxLayout()
+        h_layout2 = QHBoxLayout()
+        h_layout1.setContentsMargins(20, 20, 20, 20)
+        sapcer1 = QSpacerItem(300, 20)
+        sapcer2 = QSpacerItem(300, 20)
+        h_layout1.addWidget(self.pushButton_pre)
+        h_layout1.addItem(sapcer1)
+        h_layout1.addWidget(self.label_chapter)
+        h_layout1.addItem(sapcer2)
+        h_layout1.addWidget(self.pushButton_next)
+        h_layout2.addWidget(self.textBrowser_novel_text)
+        wg1.setLayout(h_layout1)
+        wg2.setLayout(h_layout2)
+        global_layout.addWidget(wg1)
+        global_layout.addWidget(wg2)
+        self.setLayout(global_layout)
 
     def show_win(self, novel_inf):
         self.novel_inf = novel_inf
