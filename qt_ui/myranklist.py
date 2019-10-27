@@ -21,7 +21,8 @@ class MyRankList(QWidget, Ui_Widget):
         self.grid_buttons = []                                          # 表格里的章节按钮
         self.current_time = 0                                           # 当前是什么排名的榜单（总排名。。。）
         self.novel_chapter = None                                       # 小说的章节名称
-        self.chapters = None
+        self.chapters = None                                            # 某一页的小说章节
+        self.length = 0                                                 # 小说章节页数
         self.current_time_name = ['总排名', '周排名', '月排名', '日排名']
         self.rank_lists = ['玄幻.奇幻小说排行榜', '修真.仙侠小说排行榜',
                            '都市.青春小说排行榜', '历史.穿越小说排行榜',
@@ -30,6 +31,9 @@ class MyRankList(QWidget, Ui_Widget):
         self.add_buttons()
         self.add_grid_buttons()
         self.setFixedSize(self.size())
+        for i in range(8):
+            for j in range(4):
+                self.grid_buttons[i][j].setVisible(False)
 
     def add_buttons(self):
         for i in range(20):
@@ -51,16 +55,37 @@ class MyRankList(QWidget, Ui_Widget):
             self.grid_buttons.append(tmp_list)
 
     def set_grid_button_name(self):
-        self.chapters = self.novel_chapter[self.current_chapter_index * 32:
-                                      self.current_chapter_index * 32 + 32]
-        index = 0
         for i in range(8):
             for j in range(4):
-                if ' ' in self.chapters[index][1]:
-                    self.grid_buttons[i][j].setText(self.chapters[index][1][: self.chapters[index][1].index(' ')])
-                elif '：' in self.chapters[index][1]:
-                    self.grid_buttons[i][j].setText(self.chapters[index][1][: self.chapters[index][1].index('：')])
-                index += 1
+                self.grid_buttons[i][j].setVisible(True)
+        if self.current_chapter_index < self.length:
+            self.chapters = self.novel_chapter[self.current_chapter_index * 32:
+                                          self.current_chapter_index * 32 + 32]
+            index = 0
+            for i in range(8):
+                for j in range(4):
+                    if ' ' in self.chapters[index][1]:
+                        self.grid_buttons[i][j].setText(self.chapters[index][1][: self.chapters[index][1].index(' ')])
+                    elif '：' in self.chapters[index][1]:
+                        self.grid_buttons[i][j].setText(self.chapters[index][1][: self.chapters[index][1].index('：')])
+                    index += 1
+        else:
+            self.chapters = self.novel_chapter[self.current_chapter_index * 32:]
+            index = 0
+            for i in range(8):
+                for j in range(4):
+                    if ' ' in self.chapters[index][1]:
+                        self.grid_buttons[i][j].setText(self.chapters[index][1][: self.chapters[index][1].index(' ')])
+                    elif '：' in self.chapters[index][1]:
+                        self.grid_buttons[i][j].setText(self.chapters[index][1][: self.chapters[index][1].index('：')])
+                    index += 1
+                    if index == len(self.chapters):
+                        for k in range(j + 1, 4):
+                            self.grid_buttons[i][k].setVisible(False)
+                        for k in range(i + 1, 8):
+                            for l in range(4):
+                                self.grid_buttons[k][l].setVisible(False)
+                        return
 
     def add_vertical_connection(self):
         self.pushButton_quit.clicked.connect(self.back_to_main)
@@ -120,6 +145,9 @@ class MyRankList(QWidget, Ui_Widget):
         self.grid_buttons[7][3].clicked.connect(lambda: self.read_novel(31))
 
     def choose_novel(self, select_index):
+        for i in range(8):
+            for j in range(4):
+                self.grid_buttons[i][j].setVisible(True)
         self.jianjie.clear()
         title = self.list_inf[self.current_index][self.current_time_name[self.current_time]][select_index]['title']
         link = self.list_inf[self.current_index][self.current_time_name[self.current_time]][select_index]['link']
@@ -130,7 +158,10 @@ class MyRankList(QWidget, Ui_Widget):
         self.jianjie.append(introduction[1])
         self.set_picture(novel_getter.get_novel_image())
         self.novel_chapter = novel_getter.get_novel_chapter()
-        self.label_total_page.setText('/' + str(len(self.novel_chapter)))
+        self.length = len(self.novel_chapter) // 32 - 1 \
+            if len(self.novel_chapter) % 32 == 0 else len(self.novel_chapter) // 32
+        self.label_total_page.setText('/' + str(self.length))
+        self.lineEdit_page.setText('1')
         self.set_grid_button_name()
 
     def set_picture(self, pic_name):
@@ -177,11 +208,30 @@ class MyRankList(QWidget, Ui_Widget):
         self.pushButton_week.clicked.connect(lambda: self.change_title_list(1))
         self.pushButton_month.clicked.connect(lambda: self.change_title_list(2))
         self.pushButton_day.clicked.connect(lambda: self.change_title_list(3))
+        self.pushButton_next_page.clicked.connect(lambda: self.change_page(2))
+        self.pushButton_pre_page.clicked.connect(lambda: self.change_page(1))
         for i in range(20):
             self.title_buttons[i].setText(self.list_inf[self.current_index]
                                           [self.current_time_name[self.current_time]][i]['title'])
 
+    def change_page(self, choose):
+        if choose == 1 and self.current_chapter_index > 0:
+            self.current_chapter_index -= 1
+        elif choose == 1 and self.current_chapter_index == 0:
+            QMessageBox.about(self, '提示', '已经第一页了')
+        elif choose == 2 and self.current_chapter_index < self.length:
+            self.current_chapter_index += 1
+        else:
+            QMessageBox.about(self, '提示', '已经最后一页了')
+        self.lineEdit_page.setText(str(self.current_chapter_index))
+        self.set_grid_button_name()
+
     def back_to_main(self):
+        for i in range(8):
+            for j in range(4):
+                self.grid_buttons[i][j].setVisible(False)
+        self.jianjie.clear()
+        self.label_picture.setPixmap(QtGui.QPixmap(''))
         if self.isVisible():
             self.back_signal.emit()
             self.hide()
