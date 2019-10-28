@@ -106,22 +106,42 @@ def get_novel_text(url, type=1):
     response.encoding = 'utf8'
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'lxml')
+        chapter_name = soup.find(class_='bookname').h1.string
         html_text = soup.prettify()
         pattern = re.compile('<br/>(.*?)<br/>|"content">(.*?)<br/>', re.S)
         results = pattern.findall(html_text)
-        novel = results[0][1].strip() + '\n'
         if type == 1:
+            novel = results[0][1].strip() + '\n'
             for result in results[1:-2]:
                 novel += result[0].strip() + '\n'
             return novel
         else:
+            novel = ['    ' + results[0][1].strip() + '\n']
             for result in results[1:-2]:
-                yield '    ' + result[0].strip() + '\n'
+                novel.append('    ' + result[0].strip() + '\n')
+            return chapter_name, novel
+
+
+def get_next_chapter(url):
+    response = requests.get(url, headers=headers)
+    response.encoding = 'utf8'
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'lxml')
+        res = soup.find(class_='bottem1')
+        a_tags = res.find_all('a')
+        return a_tags[3]['href']
+
+
+def get_pre_chapter(url):
+    response = requests.get(url, headers=headers)
+    response.encoding = 'utf8'
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'lxml')
+        res = soup.find(class_='bottem1')
+        a_tags = res.find_all('a')
+        return a_tags[1]['href']
 
 
 if __name__ == '__main__':
-    """douluodalu = DownloadNovel("圣墟", "http://www.xbiquge.la/13/13959/")
-    print(douluodalu.get_novel_chapter()[0: 30])
-    print(type(douluodalu.get_novel_chapter()))"""
-    test_str = '第一章 一二三'
-    print(test_str[: test_str.index(' ')])
+    get_next_chapter('http://www.xbiquge.la/13/13959/5939025.html')
+    get_pre_chapter('http://www.xbiquge.la/13/13959/5939025.html')

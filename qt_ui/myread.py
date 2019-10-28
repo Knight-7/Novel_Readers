@@ -1,7 +1,7 @@
 from qt_ui.read import Ui_read
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import pyqtSignal
-from web_craw.download_novel import get_novel_text
+from web_craw.download_novel import get_novel_text, get_next_chapter, get_pre_chapter
 from urllib.parse import urljoin
 
 
@@ -16,6 +16,8 @@ class MyRead(QWidget, Ui_read):
         self.novel_inf = None
         self.novel_text = None
         self.base_url = 'http://www.xbiquge.la/'                        # 笔趣阁网址
+        self.url = None
+        self.chapter_title = None
         self.set_form_layout()
 
     def set_form_layout(self):
@@ -41,16 +43,26 @@ class MyRead(QWidget, Ui_read):
 
     def show_win(self, novel_inf):
         self.novel_inf = novel_inf
-        self.label_chapter.setText(self.novel_inf[1])
+        self.url = urljoin(self.base_url, self.novel_inf[0])
         self.show_novel()
+        self.pushButton_next.clicked.connect(self.get_next)
+        self.pushButton_pre.clicked.connect(self.get_pre)
         if not self.isVisible():
             self.show()
 
     def show_novel(self):
-        url = urljoin(self.base_url, self.novel_inf[0])
-        self.novel_text = get_novel_text(url, 2)
+        self.chapter_title, self.novel_text = get_novel_text(self.url, 2)
+        self.label_chapter.setText(self.chapter_title)
         self.textBrowser_novel_text.clear()
         for text in self.novel_text:
             self.textBrowser_novel_text.append(text)
         cursor = self.textBrowser_novel_text.textCursor()
         self.textBrowser_novel_text.moveCursor(cursor.Start)
+
+    def get_next(self):
+        self.url = urljoin(self.base_url, get_next_chapter(self.url))
+        self.show_novel()
+
+    def get_pre(self):
+        self.url = urljoin(self.base_url, get_pre_chapter(self.url))
+        self.show_novel()
