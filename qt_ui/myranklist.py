@@ -23,9 +23,6 @@ class AThread(QtCore.QThread):
         chapter = novel_getter.get_novel_chapter()
         self.finish_signal.emit(introduction, pic_name, chapter)
 
-    def __del__(self):
-        self.wait()
-
 
 class MyRankList(QWidget, Ui_Widget):
     """排行榜的类"""
@@ -36,8 +33,8 @@ class MyRankList(QWidget, Ui_Widget):
     def __init__(self):
         super(MyRankList, self).__init__()
         self.setupUi(self)
-        self.title = None
-        self.link = None
+        self.title = None                                               # 当前正在看的小说题目
+        self.link = None                                                # 当前正在看的小说的题目
         self.list_inf = None                                            # 整个榜单的书名与链接
         self.current_chapter_index = 0                                  # 当前的页数
         self.current_index = None                                       # 当前选择的榜单的序号
@@ -169,9 +166,6 @@ class MyRankList(QWidget, Ui_Widget):
         self.grid_buttons[7][3].clicked.connect(lambda: self.read_novel(31))
 
     def choose_novel(self, select_index):
-        for i in range(8):
-            for j in range(4):
-                self.grid_buttons[i][j].setVisible(True)
         self.title = self.list_inf[self.current_index][self.current_time_name[self.current_time]][select_index]['title']
         self.link = self.list_inf[self.current_index][self.current_time_name[self.current_time]][select_index]['link']
         self.get_novel_inf(self.title, self.link)
@@ -182,6 +176,9 @@ class MyRankList(QWidget, Ui_Widget):
         t.start()
 
     def set_novel_inf(self, introduction, pic_name, chapter):
+        for i in range(8):
+            for j in range(4):
+                self.grid_buttons[i][j].setVisible(True)
         self.label_title.setText(self.title)
         self.label_author.setText(introduction[0])
         self.jianjie.clear()
