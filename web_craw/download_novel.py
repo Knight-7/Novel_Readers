@@ -143,5 +143,5 @@ def get_pre_chapter(url):
 
 
 if __name__ == '__main__':
-    get_next_chapter('http://www.xbiquge.la/13/13959/5939025.html')
-    get_pre_chapter('http://www.xbiquge.la/13/13959/5939025.html')
+    d = DownloadNovel("123", 'http://www.xbiquge.la/13/13959/')
+    print(d.get_novel_introduction())

@@ -1,8 +1,30 @@
 from PyQt5.QtWidgets import *
 from PyQt5 import QtGui
+from PyQt5 import QtCore
 from qt_ui.ranklist import Ui_Widget
 from PyQt5.QtCore import pyqtSignal
 from web_craw.download_novel import DownloadNovel
+
+
+class AThread(QtCore.QThread):
+    """QT的多线程"""
+
+    finish_signal = pyqtSignal(list, str, list)
+
+    def __init__(self, title, link):
+        super(AThread, self).__init__()
+        self.title = title
+        self.link = link
+
+    def run(self):
+        novel_getter = DownloadNovel(self.title, self.link)
+        introduction = novel_getter.get_novel_introduction()
+        pic_name = novel_getter.get_novel_image()
+        chapter = novel_getter.get_novel_chapter()
+        self.finish_signal.emit(introduction, pic_name, chapter)
+
+    def __del__(self):
+        self.wait()
 
 
 class MyRankList(QWidget, Ui_Widget):
@@ -14,6 +36,8 @@ class MyRankList(QWidget, Ui_Widget):
     def __init__(self):
         super(MyRankList, self).__init__()
         self.setupUi(self)
+        self.title = None
+        self.link = None
         self.list_inf = None                                            # 整个榜单的书名与链接
         self.current_chapter_index = 0                                  # 当前的页数
         self.current_index = None                                       # 当前选择的榜单的序号
@@ -148,16 +172,22 @@ class MyRankList(QWidget, Ui_Widget):
         for i in range(8):
             for j in range(4):
                 self.grid_buttons[i][j].setVisible(True)
-        self.jianjie.clear()
-        title = self.list_inf[self.current_index][self.current_time_name[self.current_time]][select_index]['title']
-        link = self.list_inf[self.current_index][self.current_time_name[self.current_time]][select_index]['link']
-        novel_getter = DownloadNovel(title, link)
-        introduction = novel_getter.get_novel_introduction()
-        self.label_title.setText(title)
+        self.title = self.list_inf[self.current_index][self.current_time_name[self.current_time]][select_index]['title']
+        self.link = self.list_inf[self.current_index][self.current_time_name[self.current_time]][select_index]['link']
+        self.get_novel_inf(self.title, self.link)
+
+    def get_novel_inf(self, title, link):
+        t = AThread(title, link)
+        t.finish_signal.connect(self.set_novel_inf)
+        t.start()
+
+    def set_novel_inf(self, introduction, pic_name, chapter):
+        self.label_title.setText(self.title)
         self.label_author.setText(introduction[0])
+        self.jianjie.clear()
         self.jianjie.append(introduction[1])
-        self.set_picture(novel_getter.get_novel_image())
-        self.novel_chapter = novel_getter.get_novel_chapter()
+        self.set_picture(pic_name)
+        self.novel_chapter = chapter
         self.length = len(self.novel_chapter) // 32 - 1 \
             if len(self.novel_chapter) % 32 == 0 else len(self.novel_chapter) // 32
         self.label_total_page.setText('/' + str(self.length))
@@ -173,8 +203,6 @@ class MyRankList(QWidget, Ui_Widget):
         self.list_inf = list_inf
         self.current_index = list(list_inf.keys())[0]
         self.init()
-        self.label_list_name.setText(self.rank_lists[self.current_index])
-        self.setWindowTitle(self.rank_lists[self.current_index])
         self.add_vertical_connection()
         self.add_grid_connection()
         if not self.isVisible():
@@ -204,6 +232,8 @@ class MyRankList(QWidget, Ui_Widget):
         self.label_title.setText('')
         self.label_total_page.setText('')
         self.pushButton_total.setDisabled(True)
+        self.label_list_name.setText(self.rank_lists[self.current_index])
+        self.setWindowTitle(self.rank_lists[self.current_index])
         self.pushButton_total.clicked.connect(lambda: self.change_title_list(0))
         self.pushButton_week.clicked.connect(lambda: self.change_title_list(1))
         self.pushButton_month.clicked.connect(lambda: self.change_title_list(2))
