@@ -4,6 +4,7 @@ from PyQt5 import QtCore
 from qt_ui.ranklist import Ui_Widget
 from PyQt5.QtCore import pyqtSignal
 from web_craw.download_novel import DownloadNovel
+from time import sleep
 
 
 class AThread(QtCore.QThread):
@@ -33,6 +34,7 @@ class MyRankList(QWidget, Ui_Widget):
     def __init__(self):
         super(MyRankList, self).__init__()
         self.setupUi(self)
+        self.load_inf_thread = None                                             # 定义的一个QThead的类
         self.title = None                                               # 当前正在看的小说题目
         self.link = None                                                # 当前正在看的小说的题目
         self.list_inf = None                                            # 整个榜单的书名与链接
@@ -171,9 +173,9 @@ class MyRankList(QWidget, Ui_Widget):
         self.get_novel_inf(self.title, self.link)
 
     def get_novel_inf(self, title, link):
-        t = AThread(title, link)
-        t.finish_signal.connect(self.set_novel_inf)
-        t.start()
+        self.load_inf_thread = AThread(title, link)
+        self.load_inf_thread.finish_signal.connect(self.set_novel_inf)
+        self.load_inf_thread.start()
 
     def set_novel_inf(self, introduction, pic_name, chapter):
         for i in range(8):
@@ -190,6 +192,7 @@ class MyRankList(QWidget, Ui_Widget):
         self.label_total_page.setText('/' + str(self.length))
         self.lineEdit_page.setText('1')
         self.set_grid_button_name()
+        sleep(0.2)
 
     def set_picture(self, pic_name):
         pixmap = QtGui.QPixmap(pic_name)
