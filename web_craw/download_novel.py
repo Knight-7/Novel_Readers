@@ -101,6 +101,23 @@ class DownloadNovel():
                 sleep(0.2)
 
 
+def get_novel_picture(url):
+    response = requests.get(url, headers=headers)
+    response.encoding = 'utf8'
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'lxml')
+        img_src = soup.find_all('img')[1]['src']
+        img_content = requests.get(img_src, headers=headers)
+        if img_content.status_code == 200:
+            pass
+    """self._soup = BeautifulSoup(self._response.text, 'lxml')
+        img_src = self._soup.find_all('img')[1]['src']
+        img_content = requests.get(img_src, headers=self._headers)
+        if img_content.status_code == 200:
+            self.write_to_local(self._title, img_content.content, 2)
+            return self._title + '.jpg'"""
+
+
 def get_novel_text(url, type=1):
     response = requests.get(url, headers=headers)
     response.encoding = 'utf8'

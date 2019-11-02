@@ -1,3 +1,5 @@
+import os
+
 from PyQt5.QtWidgets import *
 from PyQt5 import QtGui
 from PyQt5 import QtCore
@@ -23,6 +25,18 @@ class AThread(QtCore.QThread):
         pic_name = novel_getter.get_novel_image()
         chapter = novel_getter.get_novel_chapter()
         self.finish_signal.emit(introduction, pic_name, chapter)
+
+
+class PictureThread(QtCore.QThread):
+    """获得图片的线程"""
+    def __init__(self):
+        super(PictureThread, self).__init__()
+
+    def run(self):
+        novel_getter = DownloadNovel()
+        for name in self.current_time_name:
+            for inf in self.list_inf[self.current_index][name]:
+                pass
 
 
 class MyRankList(QWidget, Ui_Widget):
@@ -205,8 +219,14 @@ class MyRankList(QWidget, Ui_Widget):
         self.init()
         self.add_vertical_connection()
         self.add_grid_connection()
+        self.save_pictures()
         if not self.isVisible():
             self.show()
+
+    def save_pictures(self):
+        for name in self.current_time_name:
+            for inf in self.list_inf[self.current_index][name]:
+                pass
 
     def change_title_list(self, index):
         self.pushButton_total.setDisabled(False)
