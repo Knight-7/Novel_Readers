@@ -1,6 +1,7 @@
 import requests
 import re
 import os
+import platform
 
 from bs4 import BeautifulSoup
 from time import sleep
@@ -101,7 +102,8 @@ class DownloadNovel():
                 sleep(0.2)
 
 
-def get_novel_picture(url):
+def get_novel_picture(url, name):
+    name = re.sub('\d', '', name)
     response = requests.get(url, headers=headers)
     response.encoding = 'utf8'
     if response.status_code == 200:
@@ -109,13 +111,18 @@ def get_novel_picture(url):
         img_src = soup.find_all('img')[1]['src']
         img_content = requests.get(img_src, headers=headers)
         if img_content.status_code == 200:
-            pass
-    """self._soup = BeautifulSoup(self._response.text, 'lxml')
-        img_src = self._soup.find_all('img')[1]['src']
-        img_content = requests.get(img_src, headers=self._headers)
-        if img_content.status_code == 200:
-            self.write_to_local(self._title, img_content.content, 2)
-            return self._title + '.jpg'"""
+            if platform.system() == 'Windows':
+                pass
+            elif platform.system() == 'Linux':
+                picture_path = '/home/knight/tmp_pic/' + name + '.jpg'
+                if not os.path.exists(picture_path):
+                    try:
+                        with open(picture_path, 'wb') as f:
+                            f.write(img_content.content)
+                    except FileNotFoundError:
+                        print('没有发现文件')
+                    except FileExistsError:
+                        print('文件已经存在')
 
 
 def get_novel_text(url, type=1):
@@ -160,5 +167,5 @@ def get_pre_chapter(url):
 
 
 if __name__ == '__main__':
-    d = DownloadNovel("123", 'http://www.xbiquge.la/13/13959/')
-    print(d.get_novel_introduction())
+    s = '/home/knight/tmp_pic/'
+    os.remove(s[:-1])
