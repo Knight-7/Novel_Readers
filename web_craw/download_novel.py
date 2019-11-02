@@ -112,7 +112,15 @@ def get_novel_picture(url, name):
         img_content = requests.get(img_src, headers=headers)
         if img_content.status_code == 200:
             if platform.system() == 'Windows':
-                pass
+                picture_path = 'C:/tmp_pic/' + name + '.jpg'
+                if not os.path.exists(picture_path):
+                    try:
+                        with open(picture_path, 'wb') as f:
+                            f.write(img_content.content)
+                    except FileNotFoundError:
+                        print('没有发现文件')
+                    except FileExistsError:
+                        print('文件已经存在')
             elif platform.system() == 'Linux':
                 picture_path = '/home/knight/tmp_pic/' + name + '.jpg'
                 if not os.path.exists(picture_path):
