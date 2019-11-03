@@ -242,6 +242,9 @@ class MyRankList(QWidget, Ui_Widget):
 
     def set_picture(self, pic_name):
         pic_name = re.sub('\d', '', pic_name)
+        if not os.path.exists(self.picture_path + pic_name + '.jpg'):
+            get_novel_picture(self.link, pic_name)
+            print('图片下载成功')
         pixmap = QtGui.QPixmap(self.picture_path + pic_name + '.jpg')
         self.label_picture.setPixmap(pixmap)
         self.label_picture.setScaledContents(True)
