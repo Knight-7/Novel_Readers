@@ -42,6 +42,8 @@ class MyRead(QWidget, Ui_read):
         self.base_url = 'http://www.xbiquge.la/'                        # 笔趣阁网址
         self.url = None
         self.chapter_title = None
+        self.pushButton_next.clicked.connect(self.get_next)
+        self.pushButton_pre.clicked.connect(self.get_pre)
         self.set_form_layout()
 
     def set_form_layout(self):
@@ -70,8 +72,6 @@ class MyRead(QWidget, Ui_read):
         self.url = urljoin(self.base_url, self.novel_inf[0])
         self.chapter_title, self.novel_text = get_novel_text(self.url, 2)
         self.show_novel(self.chapter_title, self.novel_text, self.url)
-        self.pushButton_next.clicked.connect(self.get_next)
-        self.pushButton_pre.clicked.connect(self.get_pre)
         if not self.isVisible():
             self.show()
 
@@ -95,3 +95,12 @@ class MyRead(QWidget, Ui_read):
         self.novel_inf_thread = NovelInfThread(self.base_url, self.url, 2)
         self.novel_inf_thread.send_inf.connect(self.show_novel)
         self.novel_inf_thread.start()
+
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, '提问', '是否要退出阅读？',
+                                     QMessageBox.Yes|QMessageBox.No,
+                                     QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()

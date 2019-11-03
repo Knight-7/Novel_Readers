@@ -1,10 +1,20 @@
-import platform
-import os
+from concurrent.futures import ThreadPoolExecutor
+from time import sleep
+from random import randint
 
 
-if platform.system() == 'Windows':
-    if not os.path.exists('C:/tmp_pic'):
-        os.mkdir('C:/tmp_pic')
-elif platform.system() == 'Linux':
-    if not os.path.exists('/home/knight/tmp_pic'):
-        os.mkdir('/home/knight/tmp_pic')
+def wait(n):
+    sleep(n)
+    print(f'sleep {n} second')
+
+
+p = ThreadPoolExecutor(3)
+f = []
+for i in range(10):
+    print(i)
+    f.append(p.submit(wait, randint(5, 10)))
+    if i == 7:
+        for ff in f:
+            print(ff.cancel())
+        p.shutdown()
+        break

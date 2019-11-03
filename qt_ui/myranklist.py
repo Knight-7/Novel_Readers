@@ -11,6 +11,7 @@ from PyQt5.QtCore import pyqtSignal
 from web_craw.download_novel import DownloadNovel
 from web_craw.download_novel import get_novel_picture
 from concurrent.futures import ThreadPoolExecutor
+from threading import Thread
 from time import sleep
 
 
@@ -37,6 +38,15 @@ class PictureThread(QtCore.QThread):
         super(PictureThread, self).__init__()
         self.novel_inf = novel_inf
         self.current_time_name = ['总排名', '周排名', '月排名', '日排名']
+        self.executor = ThreadPoolExecutor(5)
+        self.futures = []
+
+    def close_thread(self):
+        def close():
+            for future in self.futures:
+                future.cancel()
+            self.executor.shutdown()
+        Thread(target=close).start()
 
     def run(self):
         if platform.system() == 'Windows':
@@ -45,10 +55,10 @@ class PictureThread(QtCore.QThread):
         elif platform.system() == 'Linux':
             if not os.path.exists('/home/knight/tmp_pic'):
                 os.mkdir('/home/knight/tmp_pic')
-        with ThreadPoolExecutor(max_workers=10) as pool:
-            for name in self.current_time_name:
-                for inf in self.novel_inf[name]:
-                    pool.submit(get_novel_picture, inf['link'], inf['title'])
+        for name in self.current_time_name:
+            for inf in self.novel_inf[name]:
+                self.futures.append(self.executor.submit(
+                    get_novel_picture, inf['link'], inf['title']))
 
 
 class MyRankList(QWidget, Ui_Widget):
@@ -56,6 +66,7 @@ class MyRankList(QWidget, Ui_Widget):
 
     read_signal = pyqtSignal(list)
     back_signal = pyqtSignal()
+    close_thread_signal = pyqtSignal()
 
     def __init__(self):
         super(MyRankList, self).__init__()
@@ -247,6 +258,7 @@ class MyRankList(QWidget, Ui_Widget):
 
     def save_pictures(self):
         self.picture_get_thread = PictureThread(self.list_inf[self.current_index])
+        self.close_thread_signal.connect(self.picture_get_thread.close_thread)
         self.picture_get_thread.start()
 
     def change_title_list(self, index):
@@ -303,7 +315,7 @@ class MyRankList(QWidget, Ui_Widget):
                 self.grid_buttons[i][j].setVisible(False)
         self.jianjie.clear()
         self.label_picture.setPixmap(QtGui.QPixmap(''))
-        self.delete_picture()
+        self.close_thread_signal.emit()
         if self.isVisible():
             self.back_signal.emit()
             self.hide()
@@ -311,9 +323,14 @@ class MyRankList(QWidget, Ui_Widget):
     def read_novel(self, index):
         self.read_signal.emit(list(self.chapters[index]))
 
-    def delete_picture(self):
-        for picture in os.listdir(self.picture_path[:-1]):
-            os.remove(self.picture_path + picture)
-
-    def __del__(self):
-        shutil.rmtree(self.picture_path[:-1])
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, '提问', '是否要退出程序？',
+                                     QMessageBox.Yes|QMessageBox.No,
+                                     QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.close_thread_signal.emit()
+            if os.path.exists(self.picture_path[:-1]):
+                shutil.rmtree(self.picture_path[:-1])
+            event.accept()
+        else:
+            event.ignore()
