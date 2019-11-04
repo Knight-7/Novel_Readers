@@ -1,31 +1,9 @@
 from qt_ui.read import Ui_read
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QThread
 from PyQt5.QtCore import pyqtSignal
-from web_craw.download_novel import get_novel_text, get_next_chapter, get_pre_chapter
+from web_craw.download_novel import get_novel_text
 from urllib.parse import urljoin
-
-
-class NovelInfThread(QThread):
-    """获取小说内容的线程"""
-
-    send_inf = pyqtSignal(str, list, str)
-
-    def __init__(self, base_url, url, pos):
-        super(NovelInfThread, self).__init__()
-        self.base_url = base_url
-        self.url = url
-        self.pos = pos
-
-    def run(self):
-        if self.pos == 1:
-            url = urljoin(self.base_url, get_next_chapter(self.url))
-            title, text = get_novel_text(url, 2)
-            self.send_inf.emit(title, text, url)
-        elif self.pos == 2:
-            url = urljoin(self.base_url, get_pre_chapter(self.url))
-            title, text = get_novel_text(url, 2)
-            self.send_inf.emit(title, text, url)
+from threads.read_thread import NovelInfThread
 
 
 class MyRead(QWidget, Ui_read):
@@ -39,7 +17,7 @@ class MyRead(QWidget, Ui_read):
         self.novel_inf = None
         self.novel_inf_thread = None
         self.novel_text = None
-        self.base_url = 'c'                        # 笔趣阁网址
+        self.base_url = 'http://www.xbiquge.la/'                        # 笔趣阁网址
         self.url = None
         self.chapter_title = None
         self.pushButton_next.clicked.connect(self.get_next)
