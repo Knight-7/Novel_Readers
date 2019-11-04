@@ -8,47 +8,9 @@ from PyQt5 import QtGui
 from PyQt5 import QtCore
 from qt_ui.ranklist import Ui_Widget
 from PyQt5.QtCore import pyqtSignal
-from web_craw.download_novel import DownloadNovel
 from web_craw.download_novel import get_novel_picture
-from concurrent.futures import ThreadPoolExecutor
 from time import sleep
-
-
-class AThread(QtCore.QThread):
-    """QT的多线程"""
-
-    finish_signal = pyqtSignal(list, list)
-
-    def __init__(self, title, link):
-        super(AThread, self).__init__()
-        self.title = title
-        self.link = link
-
-    def run(self):
-        novel_getter = DownloadNovel(self.title, self.link)
-        introduction = novel_getter.get_novel_introduction()
-        chapter = novel_getter.get_novel_chapter()
-        self.finish_signal.emit(introduction, chapter)
-
-
-class PictureThread(QtCore.QThread):
-    """获得图片的线程"""
-    def __init__(self, novel_inf):
-        super(PictureThread, self).__init__()
-        self.novel_inf = novel_inf
-        self.current_time_name = ['总排名', '周排名', '月排名', '日排名']
-
-    def run(self):
-        if platform.system() == 'Windows':
-            if not os.path.exists('C:/tmp_pic'):
-                os.mkdir('C:/tmp_pic')
-        elif platform.system() == 'Linux':
-            if not os.path.exists('/home/knight/tmp_pic'):
-                os.mkdir('/home/knight/tmp_pic')
-        with ThreadPoolExecutor(max_workers=10) as pool:
-            for name in self.current_time_name:
-                for inf in self.novel_inf[name]:
-                    pool.submit(get_novel_picture, inf['link'], inf['title'])
+from threads.ranklist_thread import AThread, PictureThread
 
 
 class MyRankList(QWidget, Ui_Widget):
@@ -56,6 +18,7 @@ class MyRankList(QWidget, Ui_Widget):
 
     read_signal = pyqtSignal(list)
     back_signal = pyqtSignal()
+    close_thread_signal = pyqtSignal()
 
     def __init__(self):
         super(MyRankList, self).__init__()
@@ -86,6 +49,14 @@ class MyRankList(QWidget, Ui_Widget):
         for i in range(8):
             for j in range(4):
                 self.grid_buttons[i][j].setVisible(False)
+
+        self.pushButton_total.clicked.connect(lambda: self.change_title_list(0))
+        self.pushButton_week.clicked.connect(lambda: self.change_title_list(1))
+        self.pushButton_month.clicked.connect(lambda: self.change_title_list(2))
+        self.pushButton_day.clicked.connect(lambda: self.change_title_list(3))
+        self.pushButton_next_page.clicked.connect(lambda: self.change_page(2))
+        self.pushButton_pre_page.clicked.connect(lambda: self.change_page(1))
+        self.pushButton_go_page.clicked.connect(lambda: self.change_page(3))
 
     def set_picture_path(self):
         if platform.system() == 'Windows':
@@ -226,11 +197,15 @@ class MyRankList(QWidget, Ui_Widget):
             if len(self.novel_chapter) % 32 == 0 else len(self.novel_chapter) // 32
         self.label_total_page.setText('/' + str(self.length))
         self.lineEdit_page.setText('1')
+        self.current_chapter_index = 0
         self.set_grid_button_name()
-        sleep(0.2)
+        sleep(0.01)
 
     def set_picture(self, pic_name):
         pic_name = re.sub('\d', '', pic_name)
+        if not os.path.exists(self.picture_path + pic_name + '.jpg'):
+            get_novel_picture(self.link, pic_name)
+            print('图片下载成功')
         pixmap = QtGui.QPixmap(self.picture_path + pic_name + '.jpg')
         self.label_picture.setPixmap(pixmap)
         self.label_picture.setScaledContents(True)
@@ -247,6 +222,7 @@ class MyRankList(QWidget, Ui_Widget):
 
     def save_pictures(self):
         self.picture_get_thread = PictureThread(self.list_inf[self.current_index])
+        self.close_thread_signal.connect(self.picture_get_thread.close_thread)
         self.picture_get_thread.start()
 
     def change_title_list(self, index):
@@ -275,27 +251,29 @@ class MyRankList(QWidget, Ui_Widget):
         self.pushButton_total.setDisabled(True)
         self.label_list_name.setText(self.rank_lists[self.current_index])
         self.setWindowTitle(self.rank_lists[self.current_index])
-        self.pushButton_total.clicked.connect(lambda: self.change_title_list(0))
-        self.pushButton_week.clicked.connect(lambda: self.change_title_list(1))
-        self.pushButton_month.clicked.connect(lambda: self.change_title_list(2))
-        self.pushButton_day.clicked.connect(lambda: self.change_title_list(3))
-        self.pushButton_next_page.clicked.connect(lambda: self.change_page(2))
-        self.pushButton_pre_page.clicked.connect(lambda: self.change_page(1))
         for i in range(20):
             self.title_buttons[i].setText(self.list_inf[self.current_index]
                                           [self.current_time_name[self.current_time]][i]['title'])
 
     def change_page(self, choose):
-        if choose == 1 and self.current_chapter_index > 0:
-            self.current_chapter_index -= 1
-        elif choose == 1 and self.current_chapter_index == 0:
-            QMessageBox.about(self, '提示', '已经第一页了')
-        elif choose == 2 and self.current_chapter_index < self.length:
-            self.current_chapter_index += 1
+        if choose != 3:
+            if choose == 1 and self.current_chapter_index > 0:
+                self.current_chapter_index -= 1
+            elif choose == 1 and self.current_chapter_index == 0:
+                QMessageBox.about(self, '提示', '已经第一页了')
+            elif choose == 2 and self.current_chapter_index < self.length:
+                self.current_chapter_index += 1
+            else:
+                QMessageBox.about(self, '提示', '已经最后一页了')
+            self.lineEdit_page.setText(str(self.current_chapter_index))
+            self.set_grid_button_name()
         else:
-            QMessageBox.about(self, '提示', '已经最后一页了')
-        self.lineEdit_page.setText(str(self.current_chapter_index))
-        self.set_grid_button_name()
+            dest = int(self.lineEdit_page.text())
+            if dest < 0 or dest > self.length:
+                QMessageBox.about(self, '提示', '输入页面超出范围，请重新输入')
+            else:
+                self.current_chapter_index = dest
+                self.set_grid_button_name()
 
     def back_to_main(self):
         for i in range(8):
@@ -303,7 +281,7 @@ class MyRankList(QWidget, Ui_Widget):
                 self.grid_buttons[i][j].setVisible(False)
         self.jianjie.clear()
         self.label_picture.setPixmap(QtGui.QPixmap(''))
-        self.delete_picture()
+        self.close_thread_signal.emit()
         if self.isVisible():
             self.back_signal.emit()
             self.hide()
@@ -311,9 +289,14 @@ class MyRankList(QWidget, Ui_Widget):
     def read_novel(self, index):
         self.read_signal.emit(list(self.chapters[index]))
 
-    def delete_picture(self):
-        for picture in os.listdir(self.picture_path[:-1]):
-            os.remove(self.picture_path + picture)
-
-    def __del__(self):
-        shutil.rmtree(self.picture_path[:-1])
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, '提问', '是否要退出程序？',
+                                     QMessageBox.Yes|QMessageBox.No,
+                                     QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.close_thread_signal.emit()
+            if os.path.exists(self.picture_path[:-1]):
+                shutil.rmtree(self.picture_path[:-1])
+            event.accept()
+        else:
+            event.ignore()

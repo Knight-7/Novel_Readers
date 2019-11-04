@@ -1,31 +1,9 @@
 from qt_ui.read import Ui_read
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QThread
 from PyQt5.QtCore import pyqtSignal
-from web_craw.download_novel import get_novel_text, get_next_chapter, get_pre_chapter
+from web_craw.download_novel import get_novel_text
 from urllib.parse import urljoin
-
-
-class NovelInfThread(QThread):
-    """获取小说内容的线程"""
-
-    send_inf = pyqtSignal(str, list, str)
-
-    def __init__(self, base_url, url, pos):
-        super(NovelInfThread, self).__init__()
-        self.base_url = base_url
-        self.url = url
-        self.pos = pos
-
-    def run(self):
-        if self.pos == 1:
-            url = urljoin(self.base_url, get_next_chapter(self.url))
-            title, text = get_novel_text(url, 2)
-            self.send_inf.emit(title, text, url)
-        elif self.pos == 2:
-            url = urljoin(self.base_url, get_pre_chapter(self.url))
-            title, text = get_novel_text(url, 2)
-            self.send_inf.emit(title, text, url)
+from threads.read_thread import NovelInfThread
 
 
 class MyRead(QWidget, Ui_read):
@@ -42,6 +20,8 @@ class MyRead(QWidget, Ui_read):
         self.base_url = 'http://www.xbiquge.la/'                        # 笔趣阁网址
         self.url = None
         self.chapter_title = None
+        self.pushButton_next.clicked.connect(self.get_next)
+        self.pushButton_pre.clicked.connect(self.get_pre)
         self.set_form_layout()
 
     def set_form_layout(self):
@@ -70,8 +50,6 @@ class MyRead(QWidget, Ui_read):
         self.url = urljoin(self.base_url, self.novel_inf[0])
         self.chapter_title, self.novel_text = get_novel_text(self.url, 2)
         self.show_novel(self.chapter_title, self.novel_text, self.url)
-        self.pushButton_next.clicked.connect(self.get_next)
-        self.pushButton_pre.clicked.connect(self.get_pre)
         if not self.isVisible():
             self.show()
 
@@ -95,3 +73,12 @@ class MyRead(QWidget, Ui_read):
         self.novel_inf_thread = NovelInfThread(self.base_url, self.url, 2)
         self.novel_inf_thread.send_inf.connect(self.show_novel)
         self.novel_inf_thread.start()
+
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, '提问', '是否要退出阅读？',
+                                     QMessageBox.Yes|QMessageBox.No,
+                                     QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()

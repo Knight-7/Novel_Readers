@@ -118,7 +118,7 @@ def get_novel_picture(url, name):
                         with open(picture_path, 'wb') as f:
                             f.write(img_content.content)
                     except FileNotFoundError:
-                        print('没有发现文件')
+                        print('目录不存在')
                     except FileExistsError:
                         print('文件已经存在')
             elif platform.system() == 'Linux':
