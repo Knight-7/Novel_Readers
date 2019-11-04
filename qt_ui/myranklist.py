@@ -50,6 +50,14 @@ class MyRankList(QWidget, Ui_Widget):
             for j in range(4):
                 self.grid_buttons[i][j].setVisible(False)
 
+        self.pushButton_total.clicked.connect(lambda: self.change_title_list(0))
+        self.pushButton_week.clicked.connect(lambda: self.change_title_list(1))
+        self.pushButton_month.clicked.connect(lambda: self.change_title_list(2))
+        self.pushButton_day.clicked.connect(lambda: self.change_title_list(3))
+        self.pushButton_next_page.clicked.connect(lambda: self.change_page(2))
+        self.pushButton_pre_page.clicked.connect(lambda: self.change_page(1))
+        self.pushButton_go_page.clicked.connect(lambda: self.change_page(3))
+
     def set_picture_path(self):
         if platform.system() == 'Windows':
             self.picture_path = 'C:/tmp_pic/'
@@ -189,8 +197,9 @@ class MyRankList(QWidget, Ui_Widget):
             if len(self.novel_chapter) % 32 == 0 else len(self.novel_chapter) // 32
         self.label_total_page.setText('/' + str(self.length))
         self.lineEdit_page.setText('1')
+        self.current_chapter_index = 0
         self.set_grid_button_name()
-        sleep(0.2)
+        sleep(0.01)
 
     def set_picture(self, pic_name):
         pic_name = re.sub('\d', '', pic_name)
@@ -242,27 +251,29 @@ class MyRankList(QWidget, Ui_Widget):
         self.pushButton_total.setDisabled(True)
         self.label_list_name.setText(self.rank_lists[self.current_index])
         self.setWindowTitle(self.rank_lists[self.current_index])
-        self.pushButton_total.clicked.connect(lambda: self.change_title_list(0))
-        self.pushButton_week.clicked.connect(lambda: self.change_title_list(1))
-        self.pushButton_month.clicked.connect(lambda: self.change_title_list(2))
-        self.pushButton_day.clicked.connect(lambda: self.change_title_list(3))
-        self.pushButton_next_page.clicked.connect(lambda: self.change_page(2))
-        self.pushButton_pre_page.clicked.connect(lambda: self.change_page(1))
         for i in range(20):
             self.title_buttons[i].setText(self.list_inf[self.current_index]
                                           [self.current_time_name[self.current_time]][i]['title'])
 
     def change_page(self, choose):
-        if choose == 1 and self.current_chapter_index > 0:
-            self.current_chapter_index -= 1
-        elif choose == 1 and self.current_chapter_index == 0:
-            QMessageBox.about(self, '提示', '已经第一页了')
-        elif choose == 2 and self.current_chapter_index < self.length:
-            self.current_chapter_index += 1
+        if choose != 3:
+            if choose == 1 and self.current_chapter_index > 0:
+                self.current_chapter_index -= 1
+            elif choose == 1 and self.current_chapter_index == 0:
+                QMessageBox.about(self, '提示', '已经第一页了')
+            elif choose == 2 and self.current_chapter_index < self.length:
+                self.current_chapter_index += 1
+            else:
+                QMessageBox.about(self, '提示', '已经最后一页了')
+            self.lineEdit_page.setText(str(self.current_chapter_index))
+            self.set_grid_button_name()
         else:
-            QMessageBox.about(self, '提示', '已经最后一页了')
-        self.lineEdit_page.setText(str(self.current_chapter_index))
-        self.set_grid_button_name()
+            dest = int(self.lineEdit_page.text())
+            if dest < 0 or dest > self.length:
+                QMessageBox.about(self, '提示', '输入页面超出范围，请重新输入')
+            else:
+                self.current_chapter_index = dest
+                self.set_grid_button_name()
 
     def back_to_main(self):
         for i in range(8):
