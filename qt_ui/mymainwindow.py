@@ -21,6 +21,13 @@ class MyMainWindow(QWidget, Ui_MainWidget):
         self.get_list()
         self.picture_path = None
         self.set_picture_path()
+        self.setFixedSize(self.size())
+        self.set_sheet_stytle()
+
+    def set_sheet_stytle(self):
+        with open('qss/black.qss', 'r', encoding='utf8') as f:
+            qss = f.read()
+        self.setStyleSheet(qss)
 
     def set_picture_path(self):
         if platform.system() == 'Windows':

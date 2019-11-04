@@ -1,6 +1,7 @@
 from qt_ui.read import Ui_read
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import *
+from PyQt5.Qt import *
 from web_craw.download_novel import get_novel_text
 from urllib.parse import urljoin
 from threads.read_thread import NovelInfThread
@@ -20,9 +21,42 @@ class MyRead(QWidget, Ui_read):
         self.base_url = 'http://www.xbiquge.la/'                        # 笔趣阁网址
         self.url = None
         self.chapter_title = None
+        self.menu = None
         self.pushButton_next.clicked.connect(self.get_next)
         self.pushButton_pre.clicked.connect(self.get_pre)
         self.set_form_layout()
+        self.create_menu()
+
+    def create_menu(self):
+        self.textBrowser_novel_text.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.textBrowser_novel_text.customContextMenuRequested.connect(self.create_right_table)
+
+    def create_right_table(self, pos):
+        self.menu = QMenu()
+        op1 = self.menu.addAction('夜间模式')
+        op2 = self.menu.addAction('白天模式')
+
+        action = self.menu.exec_(self.textBrowser_novel_text.mapToGlobal(pos))
+
+        if action == op1:
+            self.change_sheet(1)
+        elif action == op2:
+            self.change_sheet(2)
+
+    def set_sheet_stytle(self):
+        with open('qss/textbrowser.qss', 'r', encoding='utf8') as f:
+            qss = f.read()
+        self.setStyleSheet(qss)
+
+    def change_sheet(self, model):
+        if model == 1:
+            self.set_sheet_stytle()
+            self.textBrowser_novel_text.setTextColor(QColor('white'))
+        elif model == 2:
+            self.setStyleSheet('QWidget{ background-color: rgb(234, 234, 234);\
+font: 24pt "楷体";}\
+')
+            self.textBrowser_novel_text.setTextColor(QColor('black'))
 
     def set_form_layout(self):
         global_layout = QVBoxLayout()

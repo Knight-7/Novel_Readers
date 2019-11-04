@@ -49,6 +49,7 @@ class MyRankList(QWidget, Ui_Widget):
         self.add_grid_connection()
         self.setFixedSize(self.size())
         self.set_isvisible()
+        self.set_sheet_stytle()
 
         self.pushButton_total.clicked.connect(lambda: self.change_title_list(0))
         self.pushButton_week.clicked.connect(lambda: self.change_title_list(1))
@@ -57,6 +58,11 @@ class MyRankList(QWidget, Ui_Widget):
         self.pushButton_next_page.clicked.connect(lambda: self.change_page(2))
         self.pushButton_pre_page.clicked.connect(lambda: self.change_page(1))
         self.pushButton_go_page.clicked.connect(lambda: self.change_page(3))
+
+    def set_sheet_stytle(self):
+        with open('qss/black.qss', 'r', encoding='utf8') as f:
+            qss = f.read()
+        self.setStyleSheet(qss)
 
     # 根据平台设置图片的保存位置
     def set_picture_path(self):
