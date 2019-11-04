@@ -39,7 +39,7 @@ class MyRead(QWidget, Ui_read):
         self.novel_inf = None
         self.novel_inf_thread = None
         self.novel_text = None
-        self.base_url = 'http://www.xbiquge.la/'                        # 笔趣阁网址
+        self.base_url = 'c'                        # 笔趣阁网址
         self.url = None
         self.chapter_title = None
         self.pushButton_next.clicked.connect(self.get_next)
