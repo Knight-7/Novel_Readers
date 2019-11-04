@@ -56,7 +56,7 @@ class Ui_Widget(object):
         self.pushButton_next_page.setGeometry(QtCore.QRect(390, 590, 93, 28))
         self.pushButton_next_page.setObjectName("pushButton_next_page")
         self.lineEdit_page = QtWidgets.QLineEdit(Widget)
-        self.lineEdit_page.setGeometry(QtCore.QRect(285, 595, 15, 21))
+        self.lineEdit_page.setGeometry(QtCore.QRect(280, 595, 25, 21))
         self.lineEdit_page.setObjectName("lineEdit_page")
         self.lineEdit_page.setStyleSheet("QLineEdit { background-color: rgb(255, 132, 139, 34);\n"
 "border-radius: 3px; color: rgb(0, 0, 0);}")
@@ -64,7 +64,7 @@ class Ui_Widget(object):
         self.pushButton_go_page.setGeometry(QtCore.QRect(330, 595, 20, 20))
         self.pushButton_go_page.setObjectName("pushButton_next_page")
         self.label_total_page = QtWidgets.QLabel(Widget)
-        self.label_total_page.setGeometry(QtCore.QRect(300, 590, 20, 31))
+        self.label_total_page.setGeometry(QtCore.QRect(300, 590, 25, 31))
         self.label_total_page.setObjectName("label_total_page")
         self.pushButton_quit = QtWidgets.QPushButton(Widget)
         self.pushButton_quit.setGeometry(QtCore.QRect(392, 630, 111, 31))

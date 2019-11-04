@@ -45,10 +45,10 @@ class MyRankList(QWidget, Ui_Widget):
         self.set_picture_path()
         self.add_buttons()
         self.add_grid_buttons()
+        self.add_vertical_connection()
+        self.add_grid_connection()
         self.setFixedSize(self.size())
-        for i in range(8):
-            for j in range(4):
-                self.grid_buttons[i][j].setVisible(False)
+        self.set_isvisible()
 
         self.pushButton_total.clicked.connect(lambda: self.change_title_list(0))
         self.pushButton_week.clicked.connect(lambda: self.change_title_list(1))
@@ -58,12 +58,14 @@ class MyRankList(QWidget, Ui_Widget):
         self.pushButton_pre_page.clicked.connect(lambda: self.change_page(1))
         self.pushButton_go_page.clicked.connect(lambda: self.change_page(3))
 
+    # 根据平台设置图片的保存位置
     def set_picture_path(self):
         if platform.system() == 'Windows':
             self.picture_path = 'C:/tmp_pic/'
         elif platform.system() == 'Linux':
             self.picture_path = '/home/knight/tmp_pic/'
 
+    # 添加书本标题按钮
     def add_buttons(self):
         for i in range(20):
             button = QPushButton()
@@ -73,6 +75,7 @@ class MyRankList(QWidget, Ui_Widget):
             self.title_buttons[i] = button
             self.verticalLayout.addWidget(button)
 
+    # 添加章节按钮
     def add_grid_buttons(self):
         for i in range(8):
             tmp_list = []
@@ -83,11 +86,21 @@ class MyRankList(QWidget, Ui_Widget):
                 self.gridLayout.addWidget(button, i + 1, j + 1)
             self.grid_buttons.append(tmp_list)
 
-    def set_grid_button_name(self):
+    # 设置章节按钮和页面切换的显示
+    def set_isvisible(self, isvisible=False):
         for i in range(8):
             for j in range(4):
-                self.grid_buttons[i][j].setVisible(True)
-        if self.current_chapter_index < self.length:
+                self.grid_buttons[i][j].setVisible(isvisible)
+        self.pushButton_pre_page.setVisible(isvisible)
+        self.pushButton_next_page.setVisible(isvisible)
+        self.pushButton_go_page.setVisible(isvisible)
+        self.lineEdit_page.setVisible(isvisible)
+        self.label_total_page.setVisible(isvisible)
+
+    # 将章节的信息显示到按钮上
+    def set_grid_button_name(self):
+        self.set_isvisible(True)
+        if self.current_chapter_index + 1 < self.length:
             self.chapters = self.novel_chapter[self.current_chapter_index * 32:
                                           self.current_chapter_index * 32 + 32]
             index = 0
@@ -116,6 +129,7 @@ class MyRankList(QWidget, Ui_Widget):
                                 self.grid_buttons[k][l].setVisible(False)
                         return
 
+    # 给书本按钮添加信号
     def add_vertical_connection(self):
         self.pushButton_quit.clicked.connect(self.back_to_main)
         self.title_buttons[0].clicked.connect(lambda: self.choose_novel(0))
@@ -139,6 +153,7 @@ class MyRankList(QWidget, Ui_Widget):
         self.title_buttons[18].clicked.connect(lambda: self.choose_novel(18))
         self.title_buttons[19].clicked.connect(lambda: self.choose_novel(19))
 
+    # 给章节按钮添加信号
     def add_grid_connection(self):
         self.grid_buttons[0][0].clicked.connect(lambda: self.read_novel(0))
         self.grid_buttons[0][1].clicked.connect(lambda: self.read_novel(1))
@@ -173,34 +188,36 @@ class MyRankList(QWidget, Ui_Widget):
         self.grid_buttons[7][2].clicked.connect(lambda: self.read_novel(30))
         self.grid_buttons[7][3].clicked.connect(lambda: self.read_novel(31))
 
+    # 点击书本按钮之后响应的槽函数
     def choose_novel(self, select_index):
         self.title = self.list_inf[self.current_index][self.current_time_name[self.current_time]][select_index]['title']
         self.link = self.list_inf[self.current_index][self.current_time_name[self.current_time]][select_index]['link']
         self.get_novel_inf(self.title, self.link)
 
+    # 创建一个线程从网上爬取信息
     def get_novel_inf(self, title, link):
         self.load_inf_thread = AThread(title, link)
         self.load_inf_thread.finish_signal.connect(self.set_novel_inf)
         self.load_inf_thread.start()
 
+    # 把一些书本的信息设置到本地信息中
     def set_novel_inf(self, introduction, chapter):
-        for i in range(8):
-            for j in range(4):
-                self.grid_buttons[i][j].setVisible(True)
+        author = re.sub('作(.*)者', '作者', introduction[0])
         self.label_title.setText(self.title)
-        self.label_author.setText(introduction[0])
+        self.label_author.setText(author)
         self.jianjie.clear()
         self.jianjie.append(introduction[1])
         self.set_picture(self.title)
         self.novel_chapter = chapter
-        self.length = len(self.novel_chapter) // 32 - 1 \
-            if len(self.novel_chapter) % 32 == 0 else len(self.novel_chapter) // 32
+        self.length = len(self.novel_chapter) // 32 + 1 \
+            if len(self.novel_chapter) % 32 else len(self.novel_chapter) // 32
         self.label_total_page.setText('/' + str(self.length))
         self.lineEdit_page.setText('1')
         self.current_chapter_index = 0
         self.set_grid_button_name()
         sleep(0.01)
 
+    # 设置书本的图片信息
     def set_picture(self, pic_name):
         pic_name = re.sub('\d', '', pic_name)
         if not os.path.exists(self.picture_path + pic_name + '.jpg'):
@@ -210,21 +227,22 @@ class MyRankList(QWidget, Ui_Widget):
         self.label_picture.setPixmap(pixmap)
         self.label_picture.setScaledContents(True)
 
+    # 显示窗口
     def show_win(self, list_inf):
         self.list_inf = list_inf
         self.current_index = list(list_inf.keys())[0]
         self.init()
-        self.add_vertical_connection()
-        self.add_grid_connection()
         self.save_pictures()
         if not self.isVisible():
             self.show()
 
+    # 创建一个线程保存书本
     def save_pictures(self):
         self.picture_get_thread = PictureThread(self.list_inf[self.current_index])
         self.close_thread_signal.connect(self.picture_get_thread.close_thread)
         self.picture_get_thread.start()
 
+    # 切换排行榜单
     def change_title_list(self, index):
         self.pushButton_total.setDisabled(False)
         self.pushButton_week.setDisabled(False)
@@ -243,6 +261,7 @@ class MyRankList(QWidget, Ui_Widget):
             self.title_buttons[i].setText(self.list_inf[self.current_index]
                                           [self.current_time_name[self.current_time]][i]['title'])
 
+    # 窗口显示时，初始化一些控件的信息
     def init(self):
         self.label_picture.setText('')
         self.label_author.setText('')
@@ -255,30 +274,30 @@ class MyRankList(QWidget, Ui_Widget):
             self.title_buttons[i].setText(self.list_inf[self.current_index]
                                           [self.current_time_name[self.current_time]][i]['title'])
 
+    # 切换章节列表
     def change_page(self, choose):
         if choose != 3:
-            if choose == 1 and self.current_chapter_index > 0:
+            if choose == 1 and self.current_chapter_index + 1 > 1:
                 self.current_chapter_index -= 1
-            elif choose == 1 and self.current_chapter_index == 0:
+            elif choose == 1 and self.current_chapter_index + 1 == 1:
                 QMessageBox.about(self, '提示', '已经第一页了')
-            elif choose == 2 and self.current_chapter_index < self.length:
+            elif choose == 2 and self.current_chapter_index + 1 < self.length:
                 self.current_chapter_index += 1
             else:
                 QMessageBox.about(self, '提示', '已经最后一页了')
-            self.lineEdit_page.setText(str(self.current_chapter_index))
+            self.lineEdit_page.setText(str(self.current_chapter_index + 1))
             self.set_grid_button_name()
         else:
             dest = int(self.lineEdit_page.text())
-            if dest < 0 or dest > self.length:
+            if dest < 1 or dest > self.length:
                 QMessageBox.about(self, '提示', '输入页面超出范围，请重新输入')
             else:
-                self.current_chapter_index = dest
+                self.current_chapter_index = dest - 1
                 self.set_grid_button_name()
 
+    # 返回主窗口函数
     def back_to_main(self):
-        for i in range(8):
-            for j in range(4):
-                self.grid_buttons[i][j].setVisible(False)
+        self.set_isvisible()
         self.jianjie.clear()
         self.label_picture.setPixmap(QtGui.QPixmap(''))
         self.close_thread_signal.emit()
@@ -286,9 +305,21 @@ class MyRankList(QWidget, Ui_Widget):
             self.back_signal.emit()
             self.hide()
 
+    # 响应按钮点击读小说
     def read_novel(self, index):
         self.read_signal.emit(list(self.chapters[index]))
 
+    # 响应回车按键，切换章节页面信息
+    def keyPressEvent(self, event):
+        if str(event.key()) == '16777220':
+            dest = int(self.lineEdit_page.text())
+            if dest < 1 or dest > self.length:
+                QMessageBox.about(self, '提示', '输入页面超出范围，请重新输入')
+            else:
+                self.current_chapter_index = dest - 1
+                self.set_grid_button_name()
+
+    # 当窗口关闭时，响应的函数
     def closeEvent(self, event):
         reply = QMessageBox.question(self, '提问', '是否要退出程序？',
                                      QMessageBox.Yes|QMessageBox.No,
