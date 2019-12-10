@@ -1,4 +1,5 @@
 import sys
+import os
 
 from time import sleep
 from PyQt5.Qt import *
@@ -24,15 +25,16 @@ class Win(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.thread_timing = Timing(3)
-        self.init_ui()
+        self.asset_path = os.path.join(os.path.dirname(__file__), 'assets')
 
+        self.init_ui()
         self.thread_timing.signal.connect(self.timing)
         self.thread_timing.start()
 
     def init_ui(self):
         self.setGeometry(0, 0, 300, 300)
         self.label = QLabel(self);
-        self.gif = QMovie('loading.gif')
+        self.gif = QMovie(os.path.join(self.asset_path,  'loading.gif'))
         self.label.setMovie(self.gif)
         self.gif.start()
 
