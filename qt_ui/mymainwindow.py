@@ -2,9 +2,8 @@ import platform
 import os
 import shutil
 
-from PyQt5.QtWidgets import *
 from qt_ui.mainwindow import Ui_MainWidget
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.Qt import *
 from web_craw.download_list import DownloadList
 
 
@@ -23,6 +22,9 @@ class MyMainWindow(QWidget, Ui_MainWidget):
         self.set_picture_path()
         self.setFixedSize(self.size())
         self.set_sheet_stytle()
+
+        # icon = QIcon('a10.ico')
+        # self.setWindowIcon(icon)
 
     def set_sheet_stytle(self):
         with open('qss/black.qss', 'r', encoding='utf8') as f:

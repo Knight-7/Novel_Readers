@@ -1,6 +1,4 @@
 from qt_ui.read import Ui_read
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
 from PyQt5.Qt import *
 from web_craw.download_novel import get_novel_text
 from urllib.parse import urljoin
@@ -26,6 +24,9 @@ class MyRead(QWidget, Ui_read):
         self.pushButton_pre.clicked.connect(self.get_pre)
         self.set_form_layout()
         self.create_menu()
+
+        icon = QIcon('a10.ico')
+        self.setWindowIcon(icon)
 
     def create_menu(self):
         self.textBrowser_novel_text.setContextMenuPolicy(Qt.CustomContextMenu)

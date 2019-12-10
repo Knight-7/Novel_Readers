@@ -1,35 +1,49 @@
-# coding=utf-8
 import sys
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+
+from time import sleep
+from PyQt5.Qt import *
 
 
-class MenuDemo(QMainWindow):
+class Timing(QThread):
+    signal = pyqtSignal()
+    def __init__(self, time, parent=None):
+        super().__init__(parent=parent)
+        self.time = time
+    
+    def run(self):
+        while self.time:
+            sleep(1)
+            self.time -= 1
+        self.signal.emit()
+
+
+class Win(QWidget):
+    """
+    自定义一个窗口
+    """
     def __init__(self, parent=None):
-        super(MenuDemo, self).__init__(parent)
+        super().__init__(parent)
+        self.thread_timing = Timing(3)
+        self.init_ui()
 
-        self.menuBar1 = self.menuBar()
-        self.menuBar1.setGeometry(QRect(0, 0, 606, 26))
-        self.menuBar1.setObjectName("menuBar")
-        self.menuBar1.addMenu('File')
+        self.thread_timing.signal.connect(self.timing)
+        self.thread_timing.start()
 
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested['QPoint'].connect(self.rightMenuShow)
+    def init_ui(self):
+        self.setGeometry(0, 0, 300, 300)
+        self.label = QLabel(self);
+        self.gif = QMovie('loading.gif')
+        self.label.setMovie(self.gif)
+        self.gif.start()
 
-    def rightMenuShow(self):
-        rightMenu = QMenu(self.menuBar1)
-
-        self.actionreboot = QAction('zhangji')
-        self.actionreboot.setObjectName("actionreboot")
-        self.actionreboot.setText(QCoreApplication.translate("MainWindow", "重新开机"))
-        rightMenu.addAction(self.actionreboot)
-
-        rightMenu.exec_(QCursor.pos())
+    def timing(self):
+        QMessageBox.information(self, 'tips', '加载成功', QMessageBox.Yes)
+        exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
-    demo = MenuDemo()
-    demo.show()
-    sys.exit(app.exec_())
+    w = Win()
+    w.show()
+
+    exit(app.exec_())

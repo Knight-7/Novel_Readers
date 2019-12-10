@@ -3,9 +3,8 @@ import platform
 import re
 import shutil
 
-from PyQt5.QtWidgets import *
+from PyQt5.Qt import *
 from PyQt5 import QtGui
-from PyQt5 import QtCore
 from qt_ui.ranklist import Ui_Widget
 from PyQt5.QtCore import pyqtSignal
 from web_craw.download_novel import get_novel_picture
@@ -50,6 +49,9 @@ class MyRankList(QWidget, Ui_Widget):
         self.setFixedSize(self.size())
         self.set_isvisible()
         self.set_sheet_stytle()
+
+        # icon = QIcon('a10.ico')
+        # self.setWindowIcon(icon)
 
         self.pushButton_total.clicked.connect(lambda: self.change_title_list(0))
         self.pushButton_week.clicked.connect(lambda: self.change_title_list(1))
@@ -97,6 +99,7 @@ class MyRankList(QWidget, Ui_Widget):
         for i in range(8):
             for j in range(4):
                 self.grid_buttons[i][j].setVisible(isvisible)
+
         self.pushButton_pre_page.setVisible(isvisible)
         self.pushButton_next_page.setVisible(isvisible)
         self.pushButton_go_page.setVisible(isvisible)
@@ -229,6 +232,7 @@ class MyRankList(QWidget, Ui_Widget):
         if not os.path.exists(self.picture_path + pic_name + '.jpg'):
             get_novel_picture(self.link, pic_name)
             print('图片下载成功')
+
         pixmap = QtGui.QPixmap(self.picture_path + pic_name + '.jpg')
         self.label_picture.setPixmap(pixmap)
         self.label_picture.setScaledContents(True)
@@ -255,6 +259,7 @@ class MyRankList(QWidget, Ui_Widget):
         self.pushButton_month.setDisabled(False)
         self.pushButton_day.setDisabled(False)
         self.current_time = index
+
         if index == 0:
             self.pushButton_total.setDisabled(True)
         elif index == 1:
@@ -276,6 +281,7 @@ class MyRankList(QWidget, Ui_Widget):
         self.pushButton_total.setDisabled(True)
         self.label_list_name.setText(self.rank_lists[self.current_index])
         self.setWindowTitle(self.rank_lists[self.current_index])
+
         for i in range(20):
             self.title_buttons[i].setText(self.list_inf[self.current_index]
                                           [self.current_time_name[self.current_time]][i]['title'])
