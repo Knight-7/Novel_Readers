@@ -6,13 +6,10 @@ import platform
 from bs4 import BeautifulSoup
 from time import sleep
 from urllib.parse import urljoin
+from fake_useragent import UserAgent
 
 
-headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) '
-                          'AppleWebKit/537.36 (KHTML, like Gecko) '
-                          'Chrome/52.0.2743.116 Safari/537.36'
-        }
+userAgent = UserAgent()
 
 
 class DownloadNovel():
@@ -23,12 +20,15 @@ class DownloadNovel():
         self._url = url
         self._novel_path = path
         self._headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) '
-                          'AppleWebKit/537.36 (KHTML, like Gecko) '
-                          'Chrome/52.0.2743.116 Safari/537.36'
+            'User-Agent': userAgent.random
         }
         self._response = requests.get(self._url, headers=self._headers)
         self._response.encoding = 'utf8'
+        while self._response.status_code != 200:
+            self._response = requests.get(self._url, headers=self._headers)
+            self._headers['User-Agent'] = userAgent.random
+            print(self._response.status_code)
+            sleep(0.5)
         if self._response.status_code == 200:
             self._soup = BeautifulSoup(self._response.text, 'lxml')
         if self._novel_path is not None:
@@ -104,6 +104,7 @@ class DownloadNovel():
 
 def get_novel_picture(url, name):
     name = re.sub('\d', '', name)
+    headers = {'User-Agent': userAgent.random}
     response = requests.get(url, headers=headers)
     response.encoding = 'utf8'
     if response.status_code == 200:
@@ -134,6 +135,7 @@ def get_novel_picture(url, name):
 
 
 def get_novel_text(url, type=1):
+    headers = {'User-Agent': userAgent.random}
     response = requests.get(url, headers=headers)
     response.encoding = 'utf8'
     if response.status_code == 200:
@@ -155,6 +157,7 @@ def get_novel_text(url, type=1):
 
 
 def get_next_chapter(url):
+    headers = {'User-Agent': userAgent.random}
     response = requests.get(url, headers=headers)
     response.encoding = 'utf8'
     if response.status_code == 200:
@@ -165,6 +168,7 @@ def get_next_chapter(url):
 
 
 def get_pre_chapter(url):
+    headers = {'User-Agent': userAgent.random}
     response = requests.get(url, headers=headers)
     response.encoding = 'utf8'
     if response.status_code == 200:

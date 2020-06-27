@@ -27,7 +27,8 @@ class MyMainWindow(QWidget, Ui_MainWidget):
         # self.setWindowIcon(icon)
 
     def set_sheet_stytle(self):
-        with open('qss/black.qss', 'r', encoding='utf8') as f:
+        path = os.path.dirname(os.path.dirname(__file__))
+        with open(path + '/assets/qss/black.qss', 'r', encoding='utf8') as f:
             qss = f.read()
         self.setStyleSheet(qss)
 

@@ -62,7 +62,8 @@ class MyRankList(QWidget, Ui_Widget):
         self.pushButton_go_page.clicked.connect(lambda: self.change_page(3))
 
     def set_sheet_stytle(self):
-        with open('qss/black.qss', 'r', encoding='utf8') as f:
+        path = os.path.dirname(os.path.dirname(__file__))
+        with open(path + '/assets/qss/black.qss', 'r', encoding='utf8') as f:
             qss = f.read()
         self.setStyleSheet(qss)
 
